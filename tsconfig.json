@@ -1,13 +1,11 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es5",
-		"allowJs": true
-	},
-	"include": [
-		"typings/**/*"
-	],
-	"exclude": [
-		"node_modules"
-	]
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "es6",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
 }

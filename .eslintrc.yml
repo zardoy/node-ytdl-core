@@ -1,8 +1,14 @@
-extends: eslint:recommended
+extends:
+  - 'eslint:recommended'
+  - 'plugin:@typescript-eslint/recommended'
+parser: '@typescript-eslint/parser'
 parserOptions:
   ecmaVersion: 2017
+  project: tsconfig.json
   ecmaFeatures:
     impliedStrict: true
+plugins:
+  - '@typescript-eslint'
 env:
   es6: true
   node: true
@@ -16,21 +22,6 @@ rules:
   - nestedBinaryExpressions: false
   no-template-curly-in-string: error
   no-unsafe-negation: error
-  valid-jsdoc:
-  - warn
-  - prefer:
-      arg: param
-      return: returns
-    preferType:
-      Boolean: boolean
-      Number: number
-      object: Object
-      String: string
-    requireReturn: false
-    requireReturnType: true
-    requireParamDescription: false
-    requireReturnDescription: false
-    requireParamType: true
   accessor-pairs: warn
   array-callback-return: error
   complexity:
