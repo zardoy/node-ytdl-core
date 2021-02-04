@@ -17,18 +17,14 @@ const ytdl = (link: string, options: object | null): ReadableStream => {
 };
 
 // Add exports from other files
-Object.assign(ytdl, {
-  getBasicInfo,
-  getInfo,
-
-  filterFormats,
-  chooseFormat,
-
-  validateID,
-  validateURL,
-  getURLVideoID,
-  getVideoID,
-});
+ytdl.getBasicInfo = getBasicInfo;
+ytdl.getInfo = getInfo;
+ytdl.chooseFormat = chooseFormat;
+ytdl.filterFormats = filterFormats;
+ytdl.validateID = validateID;
+ytdl.validateURL = validateURL;
+ytdl.getURLVideoID = getURLVideoID;
+ytdl.getVideoID = getVideoID;
 
 ytdl.cache = {
   sig: sigCache,
