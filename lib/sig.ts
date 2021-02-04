@@ -1,39 +1,31 @@
-const { URL } = require('url');
-const miniget = require('miniget');
-const querystring = require('querystring');
-const Cache = require('./cache');
+import miniget from 'miniget';
+import querystring from 'querystring';
+import { URL } from 'url';
 
+import Cache from './cache';
 
 // A shared cache to keep track of html5player.js tokens.
-exports.cache = new Cache();
+export const cache = new Cache();
 
 
 /**
  * Extract signature deciphering tokens from html5player file.
- *
- * @param {string} html5playerfile
- * @param {Object} options
- * @returns {Promise<Array.<string>>}
  */
-exports.getTokens = (html5playerfile, options) => exports.cache.getOrSet(html5playerfile, async() => {
+export const getTokens = (html5playerfile: string, options: object): Promise<string[]> => cache.getOrSet(html5playerfile, async() => {
   let body = await miniget(html5playerfile, options.requestOptions).text();
-  const tokens = exports.extractActions(body);
+  const tokens = extractActions(body);
   if (!tokens || !tokens.length) {
     throw Error('Could not extract signature deciphering actions');
   }
-  exports.cache.set(html5playerfile, tokens);
+  cache.set(html5playerfile, tokens);
   return tokens;
 });
 
 
 /**
  * Decipher a signature based on action tokens.
- *
- * @param {Array.<string>} tokens
- * @param {string} sig
- * @returns {string}
  */
-exports.decipher = (tokens, sig) => {
+export const decipher = (tokens: string[], sig: string): string => {
   sig = sig.split('');
   for (let i = 0, len = tokens.length; i < len; i++) {
     let token = tokens[i], pos;
@@ -61,12 +53,8 @@ exports.decipher = (tokens, sig) => {
 
 /**
  * Swaps the first element of an array with one of given position.
- *
- * @param {Array.<Object>} arr
- * @param {number} position
- * @returns {Array.<Object>}
  */
-const swapHeadAndPosition = (arr, position) => {
+const swapHeadAndPosition = (arr: object[], position: number): object[] => {
   const first = arr[0];
   arr[0] = arr[position % arr.length];
   arr[position] = first;
@@ -129,11 +117,8 @@ const swapRegexp = new RegExp(`(?:^|,)(${jsKeyStr})${swapStr}`, 'm');
  *
  * After retrieving the function that does this, we can see what actions
  * it takes on a signature.
- *
- * @param {string} body
- * @returns {Array.<string>}
  */
-exports.extractActions = body => {
+export const extractActions = (body: string): string[] | null => {
   const objResult = actionsObjRegexp.exec(body);
   const funcResult = actionsFuncRegexp.exec(body);
   if (!objResult || !funcResult) { return null; }
@@ -185,12 +170,7 @@ exports.extractActions = body => {
   return tokens;
 };
 
-
-/**
- * @param {Object} format
- * @param {string} sig
- */
-exports.setDownloadURL = (format, sig) => {
+export const setDownloadURL = (format: object, sig: string) => {
   let decodedUrl;
   if (format.url) {
     decodedUrl = format.url;
@@ -224,14 +204,10 @@ exports.setDownloadURL = (format, sig) => {
 
 /**
  * Applies `sig.decipher()` to all format URL's.
- *
- * @param {Array.<Object>} formats
- * @param {string} html5player
- * @param {Object} options
  */
-exports.decipherFormats = async(formats, html5player, options) => {
+export const decipherFormats = async(formats: object[], html5player: string, options: object) => {
   let decipheredFormats = {};
-  let tokens = await exports.getTokens(html5player, options);
+  let tokens = await getTokens(html5player, options);
   formats.forEach(format => {
     let cipher = format.signatureCipher || format.cipher;
     if (cipher) {
@@ -239,8 +215,8 @@ exports.decipherFormats = async(formats, html5player, options) => {
       delete format.signatureCipher;
       delete format.cipher;
     }
-    const sig = tokens && format.s ? exports.decipher(tokens, format.s) : null;
-    exports.setDownloadURL(format, sig);
+    const sig = tokens && format.s ? decipher(tokens, format.s) : null;
+    setDownloadURL(format, sig);
     decipheredFormats[format.url] = format;
   });
   return decipheredFormats;

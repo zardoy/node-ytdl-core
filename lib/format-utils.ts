@@ -1,6 +1,5 @@
-const utils = require('./utils');
-const FORMATS = require('./formats');
-
+import FORMATS from './formats';
+import * as utils from './utils';
 
 // Use these to help sort formats, higher index is better.
 const audioEncodingRanks = [
@@ -31,13 +30,8 @@ const getAudioEncodingRank = format =>
 
 /**
  * Sort formats by a list of functions.
- *
- * @param {Object} a
- * @param {Object} b
- * @param {Array.<Function>} sortBy
- * @returns {number}
  */
-const sortFormatsBy = (a, b, sortBy) => {
+const sortFormatsBy = (a: object, b: object, sortBy: NonNullable<Parameters<typeof Array.prototype.sort>[0]>): number => {
   let res = 0;
   for (let fn of sortBy) {
     res = fn(b) - fn(a);
@@ -47,7 +41,6 @@ const sortFormatsBy = (a, b, sortBy) => {
   }
   return res;
 };
-
 
 const sortFormatsByVideo = (a, b) => sortFormatsBy(a, b, [
   format => parseInt(format.qualityLabel),
@@ -64,12 +57,8 @@ const sortFormatsByAudio = (a, b) => sortFormatsBy(a, b, [
 
 /**
  * Sort formats from highest quality to lowest.
- *
- * @param {Object} a
- * @param {Object} b
- * @returns {number}
  */
-exports.sortFormats = (a, b) => sortFormatsBy(a, b, [
+export const sortFormats = (a: object, b: object): number => sortFormatsBy(a, b, [
   // Formats with both video and audio are ranked highest.
   format => +!!format.isHLS,
   format => +!!format.isDashMPD,
@@ -87,12 +76,9 @@ exports.sortFormats = (a, b) => sortFormatsBy(a, b, [
 /**
  * Choose a format depending on the given options.
  *
- * @param {Array.<Object>} formats
- * @param {Object} options
- * @returns {Object}
  * @throws {Error} when no format matches the filter/format rules
  */
-exports.chooseFormat = (formats, options) => {
+export const chooseFormat = (formats: object[], options: object): object => {
   if (typeof options.format === 'object') {
     if (!options.format.url) {
       throw Error('Invalid format given, did you use `ytdl.getInfo()`?');
@@ -101,7 +87,7 @@ exports.chooseFormat = (formats, options) => {
   }
 
   if (options.filter) {
-    formats = exports.filterFormats(formats, options.filter);
+    formats = filterFormats(formats, options.filter);
   }
 
   let format;
@@ -116,25 +102,25 @@ exports.chooseFormat = (formats, options) => {
       break;
 
     case 'highestaudio':
-      formats = exports.filterFormats(formats, 'audio');
+      formats = filterFormats(formats, 'audio');
       formats.sort(sortFormatsByAudio);
       format = formats[0];
       break;
 
     case 'lowestaudio':
-      formats = exports.filterFormats(formats, 'audio');
+      formats = filterFormats(formats, 'audio');
       formats.sort(sortFormatsByAudio);
       format = formats[formats.length - 1];
       break;
 
     case 'highestvideo':
-      formats = exports.filterFormats(formats, 'video');
+      formats = filterFormats(formats, 'video');
       formats.sort(sortFormatsByVideo);
       format = formats[0];
       break;
 
     case 'lowestvideo':
-      formats = exports.filterFormats(formats, 'video');
+      formats = filterFormats(formats, 'video');
       formats.sort(sortFormatsByVideo);
       format = formats[formats.length - 1];
       break;
@@ -153,11 +139,8 @@ exports.chooseFormat = (formats, options) => {
 /**
  * Gets a format based on quality or array of quality's
  *
- * @param {string|[string]} quality
- * @param {[Object]} formats
- * @returns {Object}
  */
-const getFormatByQuality = (quality, formats) => {
+const getFormatByQuality = (quality: string | string[], formats: object): object => {
   let getFormat = itag => formats.find(format => `${format.itag}` === `${itag}`);
   if (Array.isArray(quality)) {
     return getFormat(quality.find(q => getFormat(q)));
@@ -166,13 +149,7 @@ const getFormatByQuality = (quality, formats) => {
   }
 };
 
-
-/**
- * @param {Array.<Object>} formats
- * @param {Function} filter
- * @returns {Array.<Object>}
- */
-exports.filterFormats = (formats, filter) => {
+export const filterFormats = (formats: object[], filter: Function): object[] => {
   let fn;
   switch (filter) {
     case 'videoandaudio':
@@ -206,12 +183,7 @@ exports.filterFormats = (formats, filter) => {
   return formats.filter(format => !!format.url && fn(format));
 };
 
-
-/**
- * @param {Object} format
- * @returns {Object}
- */
-exports.addFormatMeta = format => {
+export const addFormatMeta = (format: object): object => {
   format = Object.assign({}, FORMATS[format.itag], format);
   format.hasVideo = !!format.qualityLabel;
   format.hasAudio = !!format.audioBitrate;

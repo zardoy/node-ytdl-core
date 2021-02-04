@@ -1,20 +1,15 @@
-const miniget = require('miniget');
+import miniget from 'miniget';
 
 
 /**
  * Extract string inbetween another.
- *
- * @param {string} haystack
- * @param {string} left
- * @param {string} right
- * @returns {string}
  */
-exports.between = (haystack, left, right) => {
-  let pos;
+export const between = (haystack: string, left: string | RegExp, right: string): string => {
+  let pos: number;
   if (left instanceof RegExp) {
     const match = haystack.match(left);
     if (!match) { return ''; }
-    pos = match.index + match[0].length;
+    pos = match.index! + match[0].length;
   } else {
     pos = haystack.indexOf(left);
     if (pos === -1) { return ''; }
@@ -30,11 +25,8 @@ exports.between = (haystack, left, right) => {
 
 /**
  * Get a number from an abbreviated number string.
- *
- * @param {string} string
- * @returns {number}
  */
-exports.parseAbbreviatedNumber = string => {
+export const parseAbbreviatedNumber = (string: string): number | null => {
   const match = string
     .replace(',', '.')
     .replace(' ', '')
@@ -50,12 +42,9 @@ exports.parseAbbreviatedNumber = string => {
 
 
 /**
- * Match begin and end braces of input JSON, return only json
- *
- * @param {string} mixedJson
- * @returns {string}
+ * Match begin and end braces of input JSON, return only json.
 */
-exports.cutAfterJSON = mixedJson => {
+export const cutAfterJSON = (mixedJson: string) => {
   let open, close;
   if (mixedJson[0] === '[') {
     open = '[';
@@ -112,13 +101,8 @@ exports.cutAfterJSON = mixedJson => {
 
 /**
  * Checks if there is a playability error.
- *
- * @param {Object} player_response
- * @param {Array.<string>} statuses
- * @param {Error} ErrorType
- * @returns {!Error}
  */
-exports.playError = (player_response, statuses, ErrorType = Error) => {
+export const playError = (player_response: object, statuses: string[], ErrorType = Error): Error => {
   let playability = player_response && player_response.playabilityStatus;
   if (playability && statuses.includes(playability.status)) {
     return new ErrorType(playability.reason || (playability.messages && playability.messages[0]));
@@ -129,14 +113,8 @@ exports.playError = (player_response, statuses, ErrorType = Error) => {
 
 /**
  * Temporary helper to help deprecating a few properties.
- *
- * @param {Object} obj
- * @param {string} prop
- * @param {Object} value
- * @param {string} oldPath
- * @param {string} newPath
  */
-exports.deprecate = (obj, prop, value, oldPath, newPath) => {
+export const deprecate = (obj: object, prop: string, value: object, oldPath: string, newPath: string): void => {
   Object.defineProperty(obj, prop, {
     get: () => {
       console.warn(`\`${oldPath}\` will be removed in a near future release, ` +
@@ -148,13 +126,13 @@ exports.deprecate = (obj, prop, value, oldPath, newPath) => {
 
 
 // Check for updates.
-const pkg = require('../package.json');
+import pkg from '../package.json';
 const UPDATE_INTERVAL = 1000 * 60 * 60 * 12;
-exports.lastUpdateCheck = 0;
-exports.checkForUpdates = () => {
+export let lastUpdateCheck = 0;
+export const checkForUpdates = () => {
   if (!process.env.YTDL_NO_UPDATE && !pkg.version.startsWith('0.0.0-') &&
-    Date.now() - exports.lastUpdateCheck >= UPDATE_INTERVAL) {
-    exports.lastUpdateCheck = Date.now();
+    Date.now() - lastUpdateCheck >= UPDATE_INTERVAL) {
+    lastUpdateCheck = Date.now();
     return miniget('https://api.github.com/repos/fent/node-ytdl-core/releases/latest', {
       headers: { 'User-Agent': 'ytdl-core' },
     }).text().then(response => {

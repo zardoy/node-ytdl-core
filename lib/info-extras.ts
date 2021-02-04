@@ -1,8 +1,8 @@
-const utils = require('./utils');
-const qs = require('querystring');
-const { URL } = require('url');
-const { parseTimestamp } = require('m3u8stream');
+import { parseTimestamp } from 'm3u8stream';
+import { URL } from 'url';
+import qs from 'querystring';
 
+import * as utils from './utils';
 
 const BASE_URL = 'https://www.youtube.com/watch?v=';
 const TITLE_TO_CATEGORY = {
@@ -14,11 +14,8 @@ const getText = obj => obj ? obj.runs ? obj.runs[0].text : obj.simpleText : null
 
 /**
  * Get video media.
- *
- * @param {Object} info
- * @returns {Object}
  */
-exports.getMedia = info => {
+export const getMedia = (info: object): object => {
   let media = {};
   let results = [];
   try {
@@ -84,11 +81,8 @@ const isVerified = badges => !!(badges && badges.find(b => b.metadataBadgeRender
 
 /**
  * Get video author.
- *
- * @param {Object} info
- * @returns {Object}
  */
-exports.getAuthor = info => {
+export const getAuthor = (info: object): object => {
   let channelId, thumbnails = [], subscriberCount, verified = false;
   try {
     let results = info.response.contents.twoColumnWatchNextResults.results.results.contents;
@@ -192,11 +186,8 @@ const parseRelatedVideo = (details, rvsParams) => {
 
 /**
  * Get related videos.
- *
- * @param {Object} info
- * @returns {Array.<Object>}
  */
-exports.getRelatedVideos = info => {
+export const getRelatedVideos = (info: object): object[] => {
   let rvsParams = [], secondaryResults = [];
   try {
     rvsParams = info.response.webWatchNextResponseExtensionData.relatedVideoArgs.split(',').map(e => qs.parse(e));
@@ -228,11 +219,8 @@ exports.getRelatedVideos = info => {
 
 /**
  * Get like count.
- *
- * @param {Object} info
- * @returns {number}
  */
-exports.getLikes = info => {
+export const getLikes = (info: object): number => {
   try {
     let contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
     let video = contents.find(r => r.videoPrimaryInfoRenderer);
@@ -247,11 +235,8 @@ exports.getLikes = info => {
 
 /**
  * Get dislike count.
- *
- * @param {Object} info
- * @returns {number}
  */
-exports.getDislikes = info => {
+export const getDislikes = (info: object): number => {
   try {
     let contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
     let video = contents.find(r => r.videoPrimaryInfoRenderer);
@@ -266,12 +251,8 @@ exports.getDislikes = info => {
 
 /**
  * Cleans up a few fields on `videoDetails`.
- *
- * @param {Object} videoDetails
- * @param {Object} info
- * @returns {Object}
  */
-exports.cleanVideoDetails = (videoDetails, info) => {
+export const cleanVideoDetails = (videoDetails: object, info: object): object => {
   videoDetails.thumbnails = videoDetails.thumbnail.thumbnails;
   delete videoDetails.thumbnail;
   utils.deprecate(videoDetails, 'thumbnail', { thumbnails: videoDetails.thumbnails },
@@ -290,11 +271,8 @@ exports.cleanVideoDetails = (videoDetails, info) => {
 
 /**
  * Get storyboards info.
- *
- * @param {Object} info
- * @returns {Array.<Object>}
  */
-exports.getStoryboards = info => {
+export const getStoryboards = (info: object): object => {
   const parts = info.player_response.storyboards &&
     info.player_response.storyboards.playerStoryboardSpecRenderer &&
     info.player_response.storyboards.playerStoryboardSpecRenderer.spec &&

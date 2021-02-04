@@ -1,24 +1,25 @@
-const { URL } = require('url');
-const querystring = require('querystring');
-const sax = require('sax');
-const miniget = require('miniget');
-const utils = require('./utils');
+import miniget from 'miniget';
+// Remove it
+import querystring from 'querystring';
+import sax from 'sax';
 // Forces Node JS version of setTimeout for Electron based applications
-const { setTimeout } = require('timers');
-const formatUtils = require('./format-utils');
-const urlUtils = require('./url-utils');
-const extras = require('./info-extras');
-const sig = require('./sig');
-const Cache = require('./cache');
+import { setTimeout } from 'timers';
+import { URL } from 'url';
 
+import Cache from './cache';
+import * as formatUtils from './format-utils';
+import * as extras from './info-extras';
+import * as sig from './sig';
+import * as urlUtils from './url-utils';
+import * as utils from './utils';
 
 const BASE_URL = 'https://www.youtube.com/watch?v=';
 
 
 // Cached for storing basic/full info.
-exports.cache = new Cache();
-exports.cookieCache = new Cache(1000 * 60 * 60 * 24);
-exports.watchPageCache = new Cache();
+export const cache = new Cache();
+export const cookieCache = new Cache(1000 * 60 * 60 * 24);
+export const watchPageCache = new Cache();
 
 
 // Special error class used to determine if an error is unrecoverable,
@@ -27,7 +28,9 @@ exports.watchPageCache = new Cache();
 class UnrecoverableError extends Error {}
 
 
-// List of URLs that show up in `notice_url` for age restricted videos.
+/**
+ * List of URLs that show up in `notice_url` for age restricted videos.
+ */
 const AGE_RESTRICTED_URLS = [
   'support.google.com/youtube/?p=age_restrictions',
   'youtube.com/t/community_guidelines',
@@ -36,12 +39,8 @@ const AGE_RESTRICTED_URLS = [
 
 /**
  * Gets info from a video without getting additional formats.
- *
- * @param {string} id
- * @param {Object} options
- * @returns {Promise<Object>}
-*/
-exports.getBasicInfo = async(id, options) => {
+ */
+export const getBasicInfo = async(id: string, options: object): Promise<object> => {
   const retryOptions = Object.assign({}, miniget.defaultOptions, options.requestOptions);
   options.requestOptions = Object.assign({}, options.requestOptions, {});
   options.requestOptions.headers = Object.assign({},
@@ -119,7 +118,7 @@ const isNotYetBroadcasted = player_response => {
 const getWatchHTMLURL = (id, options) => `${BASE_URL + id}&hl=${options.lang || 'en'}`;
 const getWatchHTMLPageBody = (id, options) => {
   const url = getWatchHTMLURL(id, options);
-  return exports.watchPageCache.getOrSet(url, () => miniget(url, options.requestOptions).text());
+  return watchPageCache.getOrSet(url, () => miniget(url, options.requestOptions).text());
 };
 
 
@@ -139,7 +138,7 @@ const getHTML5player = body => {
 
 
 const getIdentityToken = (id, options, key, throwIfNotFound) =>
-  exports.cookieCache.getOrSet(key, async() => {
+  cookieCache.getOrSet(key, async() => {
     let page = await getWatchHTMLPageBody(id, options);
     let match = page.match(/(["'])ID_TOKEN\1[:,]\s?"([^"]+)"/);
     if (!match && throwIfNotFound) {
@@ -152,14 +151,8 @@ const getIdentityToken = (id, options, key, throwIfNotFound) =>
 /**
  * Goes through each endpoint in the pipeline, retrying on failure if the error is recoverable.
  * If unable to succeed with one endpoint, moves onto the next one.
- *
- * @param {Array.<Object>} args
- * @param {Function} validate
- * @param {Object} retryOptions
- * @param {Array.<Function>} endpoints
- * @returns {[Object, Object, Object]}
  */
-const pipeline = async(args, validate, retryOptions, endpoints) => {
+const pipeline = async(args: object[], validate: Function, retryOptions: object, endpoints: Function[]): [object, object, object] => {
   let info;
   for (let func of endpoints) {
     try {
@@ -187,12 +180,8 @@ const pipeline = async(args, validate, retryOptions, endpoints) => {
 
 /**
  * Like Object.assign(), but ignores `null` and `undefined` from `source`.
- *
- * @param {Object} target
- * @param {Object} source
- * @returns {Object}
  */
-const assign = (target, source) => {
+const assign = (target: object, source: object): object => {
   if (!target || !source) { return target || source; }
   for (let [key, value] of Object.entries(source)) {
     if (value !== null && value !== undefined) {
@@ -208,15 +197,8 @@ const assign = (target, source) => {
  * or until it encounters an unrecoverable error.
  * Currently, any error from miniget is considered unrecoverable. Errors such as
  * too many redirects, invalid URL, status code 404, status code 502.
- *
- * @param {Function} func
- * @param {Array.<Object>} args
- * @param {Object} options
- * @param {number} options.maxRetries
- * @param {Object} options.backoff
- * @param {number} options.backoff.inc
  */
-const retryFunc = async(func, args, options) => {
+const retryFunc = async(func: Function, args: object[], options: { maxRetries: number, backoff: { inc: number } }) => {
   let currentTry = 0, result;
   while (currentTry <= options.maxRetries) {
     try {
@@ -274,7 +256,7 @@ const getWatchJSONPage = async(id, options) => {
   reqOptions.headers = Object.assign({
     'x-youtube-client-name': '1',
     'x-youtube-client-version': '2.20201203.06.00',
-    'x-youtube-identity-token': exports.cookieCache.get(cookie || 'browser') || '',
+    'x-youtube-identity-token': cookieCache.get(cookie || 'browser') || '',
   }, reqOptions.headers);
 
   const setIdentityToken = async(key, throwIfNotFound) => {
@@ -335,12 +317,7 @@ const getVideoInfoPage = async(id, options) => {
   return info;
 };
 
-
-/**
- * @param {Object} player_response
- * @returns {Array.<Object>}
- */
-const parseFormats = player_response => {
+const parseFormats = (player_response: object): object[] => {
   let formats = [];
   if (player_response && player_response.streamingData) {
     formats = formats
@@ -353,13 +330,9 @@ const parseFormats = player_response => {
 
 /**
  * Gets info from a video additional formats and deciphered URLs.
- *
- * @param {string} id
- * @param {Object} options
- * @returns {Promise<Object>}
  */
-exports.getInfo = async(id, options) => {
-  let info = await exports.getBasicInfo(id, options);
+export const getInfo = async(id: string, options: object): Promise<object> => {
+  let info = await getBasicInfo(id, options);
   const hasManifest =
     info.player_response && info.player_response.streamingData && (
       info.player_response.streamingData.dashManifestUrl ||
@@ -395,12 +368,8 @@ exports.getInfo = async(id, options) => {
 
 /**
  * Gets additional DASH formats.
- *
- * @param {string} url
- * @param {Object} options
- * @returns {Promise<Array.<Object>>}
  */
-const getDashManifest = (url, options) => new Promise((resolve, reject) => {
+const getDashManifest = (url: string, options: object): Promise<object[]> => new Promise((resolve, reject) => {
   let formats = {};
   const parser = sax.parser(false);
   parser.onerror = reject;
@@ -420,8 +389,8 @@ const getDashManifest = (url, options) => new Promise((resolve, reject) => {
           height: parseInt(node.attributes.HEIGHT),
           fps: parseInt(node.attributes.FRAMERATE),
         } : {
-          audioSampleRate: node.attributes.AUDIOSAMPLINGRATE,
-        });
+            audioSampleRate: node.attributes.AUDIOSAMPLINGRATE,
+          });
       }
     }
   };
@@ -436,12 +405,8 @@ const getDashManifest = (url, options) => new Promise((resolve, reject) => {
 
 /**
  * Gets additional formats.
- *
- * @param {string} url
- * @param {Object} options
- * @returns {Promise<Array.<Object>>}
  */
-const getM3U8 = async(url, options) => {
+const getM3U8 = async(url: string, options: object): Promise<object[]> => {
   url = new URL(url, BASE_URL);
   let body = await miniget(url.toString(), options.requestOptions).text();
   let formats = {};
@@ -469,13 +434,6 @@ for (let funcName of ['getBasicInfo', 'getInfo']) {
     utils.checkForUpdates();
     let id = await urlUtils.getVideoID(link);
     const key = [funcName, id, options.lang].join('-');
-    return exports.cache.getOrSet(key, () => func(id, options));
+    return cache.getOrSet(key, () => func(id, options));
   };
 }
-
-
-// Export a few helpers.
-exports.validateID = urlUtils.validateID;
-exports.validateURL = urlUtils.validateURL;
-exports.getURLVideoID = urlUtils.getURLVideoID;
-exports.getVideoID = urlUtils.getVideoID;

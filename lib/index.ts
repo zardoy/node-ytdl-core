@@ -1,41 +1,40 @@
-const PassThrough = require('stream').PassThrough;
-const getInfo = require('./info');
-const utils = require('./utils');
-const formatUtils = require('./format-utils');
-const urlUtils = require('./url-utils');
-const sig = require('./sig');
-const miniget = require('miniget');
-const m3u8stream = require('m3u8stream');
-const { parseTimestamp } = require('m3u8stream');
+import m3u8stream, { parseTimestamp } from 'm3u8stream';
+import miniget from 'miniget';
+import { PassThrough, Readable } from 'stream';
 
+import { chooseFormat, filterFormats } from './format-utils';
+import { cache as infoCache, cookieCache, getBasicInfo, getInfo, watchPageCache } from './info';
+import { cache as sigCache } from './sig';
+import { getURLVideoID, getVideoID, validateID, validateURL } from './url-utils';
+import * as utils from './utils';
 
-/**
- * @param {string} link
- * @param {!Object} options
- * @returns {ReadableStream}
- */
-const ytdl = (link, options) => {
+const ytdl = (link: string, options: object | null): ReadableStream => {
   const stream = createStream(options);
   ytdl.getInfo(link, options).then(info => {
     downloadFromInfoCallback(stream, info, options);
   }, stream.emit.bind(stream, 'error'));
   return stream;
 };
-module.exports = ytdl;
 
-ytdl.getBasicInfo = getInfo.getBasicInfo;
-ytdl.getInfo = getInfo.getInfo;
-ytdl.chooseFormat = formatUtils.chooseFormat;
-ytdl.filterFormats = formatUtils.filterFormats;
-ytdl.validateID = urlUtils.validateID;
-ytdl.validateURL = urlUtils.validateURL;
-ytdl.getURLVideoID = urlUtils.getURLVideoID;
-ytdl.getVideoID = urlUtils.getVideoID;
+// Add exports from other files
+Object.assign(ytdl, {
+  getBasicInfo,
+  getInfo,
+
+  filterFormats,
+  chooseFormat,
+
+  validateID,
+  validateURL,
+  getURLVideoID,
+  getVideoID,
+});
+
 ytdl.cache = {
-  sig: sig.cache,
-  info: getInfo.cache,
-  watch: getInfo.watchPageCache,
-  cookie: getInfo.cookieCache,
+  sig: sigCache,
+  info: infoCache,
+  watch: watchPageCache,
+  cookie: cookieCache,
 };
 
 
@@ -61,12 +60,8 @@ const pipeAndSetEvents = (req, stream, end) => {
 
 /**
  * Chooses a format to download.
- *
- * @param {stream.Readable} stream
- * @param {Object} info
- * @param {Object} options
  */
-const downloadFromInfoCallback = (stream, info, options) => {
+const downloadFromInfoCallback = (stream: Readable, info: object, options: object) => {
   options = options || {};
 
   let err = utils.playError(info.player_response, ['UNPLAYABLE', 'LIVE_STREAM_OFFLINE', 'LOGIN_REQUIRED']);
@@ -188,12 +183,8 @@ const downloadFromInfoCallback = (stream, info, options) => {
  * Can be used to download video after its `info` is gotten through
  * `ytdl.getInfo()`. In case the user might want to look at the
  * `info` object before deciding to download.
- *
- * @param {Object} info
- * @param {!Object} options
- * @returns {ReadableStream}
  */
-ytdl.downloadFromInfo = (info, options) => {
+ytdl.downloadFromInfo = (info: object, options: object): ReadableStream => {
   const stream = createStream(options);
   if (!info.full) {
     throw Error('Cannot use `ytdl.downloadFromInfo()` when called ' +
@@ -204,3 +195,5 @@ ytdl.downloadFromInfo = (info, options) => {
   });
   return stream;
 };
+
+export = ytdl;

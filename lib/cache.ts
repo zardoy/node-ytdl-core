@@ -1,12 +1,13 @@
-const { setTimeout } = require('timers');
+import { setTimeout } from 'timers';
 
-// A cache that expires.
-module.exports = class Cache extends Map {
-  constructor(timeout = 1000) {
+/**
+ * A cache that expires.
+ */
+export default class Cache extends Map {
+  constructor(public timeout = 1000) {
     super();
-    this.timeout = timeout;
   }
-  set(key, value) {
+  set(key: unknown, value: unknown): any {
     if (this.has(key)) {
       clearTimeout(super.get(key).tid);
     }
@@ -15,14 +16,14 @@ module.exports = class Cache extends Map {
       value,
     });
   }
-  get(key) {
+  get(key: unknown): any {
     let entry = super.get(key);
     if (entry) {
       return entry.value;
     }
     return null;
   }
-  getOrSet(key, fn) {
+  getOrSet(key: unknown, fn: () => unknown): any {
     if (this.has(key)) {
       return this.get(key);
     } else {
@@ -38,17 +39,17 @@ module.exports = class Cache extends Map {
       return value;
     }
   }
-  delete(key) {
+  delete(key: unknown): void {
     let entry = super.get(key);
     if (entry) {
       clearTimeout(entry.tid);
       super.delete(key);
     }
   }
-  clear() {
+  clear(): void {
     for (let entry of this.values()) {
       clearTimeout(entry.tid);
     }
     super.clear();
   }
-};
+}
