@@ -103,9 +103,9 @@ export const cutAfterJSON = (mixedJson: string) => {
  * Checks if there is a playability error.
  */
 export const playError = (player_response: object, statuses: string[], ErrorType = Error): Error => {
-  let playability = player_response && player_response.playabilityStatus;
+  let playability = player_response?.playabilityStatus;
   if (playability && statuses.includes(playability.status)) {
-    return new ErrorType(playability.reason || (playability.messages && playability.messages[0]));
+    return new ErrorType(playability.reason || (playability.messages?.[0]));
   }
   return null;
 };

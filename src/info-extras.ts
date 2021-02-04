@@ -37,7 +37,7 @@ export const getMedia = (info: object): object => {
         let contents = row.metadataRowRenderer.contents[0];
         media[title] = getText(contents);
         let runs = contents.runs;
-        if (runs && runs[0].navigationEndpoint) {
+        if (runs?.[0].navigationEndpoint) {
           media[`${title}_url`] = new URL(
             runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url, BASE_URL).toString();
         }
@@ -87,9 +87,7 @@ export const getAuthor = (info: object): object => {
   try {
     let results = info.response.contents.twoColumnWatchNextResults.results.results.contents;
     let v = results.find(v2 =>
-      v2.videoSecondaryInfoRenderer &&
-      v2.videoSecondaryInfoRenderer.owner &&
-      v2.videoSecondaryInfoRenderer.owner.videoOwnerRenderer);
+      v2.videoSecondaryInfoRenderer?.owner?.videoOwnerRenderer);
     let videoOwnerRenderer = v.videoSecondaryInfoRenderer.owner.videoOwnerRenderer;
     channelId = videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId;
     thumbnails = videoOwnerRenderer.thumbnail.thumbnails.map(thumbnail => {
@@ -102,8 +100,8 @@ export const getAuthor = (info: object): object => {
     // Do nothing.
   }
   try {
-    let videoDetails = info.player_response.microformat && info.player_response.microformat.playerMicroformatRenderer;
-    let id = (videoDetails && videoDetails.channelId) || channelId || info.player_response.videoDetails.channelId;
+    let videoDetails = info.player_response.microformat?.playerMicroformatRenderer;
+    let id = videoDetails?.channelId || channelId || info.player_response.videoDetails.channelId;
     let author = {
       id: id,
       name: videoDetails ? videoDetails.ownerChannelName : info.player_response.videoDetails.author,
@@ -131,7 +129,7 @@ const parseRelatedVideo = (details, rvsParams) => {
     let shortViewCount = getText(details.shortViewCountText);
     let rvsDetails = rvsParams.find(elem => elem.id === details.videoId);
     if (!/^\d/.test(shortViewCount)) {
-      shortViewCount = (rvsDetails && rvsDetails.short_view_count_text) || '';
+      shortViewCount = (rvsDetails?.short_view_count_text) || '';
     }
     viewCount = (/^\d/.test(viewCount) ? viewCount : shortViewCount).split(' ')[0];
     let browseEndpoint = details.shortBylineText.runs[0].navigationEndpoint.browseEndpoint;
@@ -264,8 +262,7 @@ export const cleanVideoDetails = (videoDetails: object, info: object): object =>
 
   // Use more reliable `lengthSeconds` from `playerMicroformatRenderer`.
   videoDetails.lengthSeconds =
-    info.player_response.microformat &&
-    info.player_response.microformat.playerMicroformatRenderer.lengthSeconds;
+    info.player_response.microformat?.playerMicroformatRenderer.lengthSeconds;
   return videoDetails;
 };
 
@@ -273,10 +270,7 @@ export const cleanVideoDetails = (videoDetails: object, info: object): object =>
  * Get storyboards info.
  */
 export const getStoryboards = (info: object): object => {
-  const parts = info.player_response.storyboards &&
-    info.player_response.storyboards.playerStoryboardSpecRenderer &&
-    info.player_response.storyboards.playerStoryboardSpecRenderer.spec &&
-    info.player_response.storyboards.playerStoryboardSpecRenderer.spec.split('|');
+  const parts = info.player_response.storyboards?.playerStoryboardSpecRenderer?.spec?.split('|');
 
   if (!parts) return [];
 

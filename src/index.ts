@@ -36,7 +36,7 @@ ytdl.cache = {
 
 const createStream = options => {
   const stream = new PassThrough({
-    highWaterMark: (options && options.highWaterMark) || 1024 * 512,
+    highWaterMark: options?.highWaterMark || 1024 * 512,
   });
   stream._destroy = () => { stream.destroyed = true; };
   return stream;
@@ -117,9 +117,9 @@ const downloadFromInfoCallback = (stream: Readable, info: object, options: objec
     let shouldBeChunked = dlChunkSize !== 0 && (!format.hasAudio || !format.hasVideo);
 
     if (shouldBeChunked) {
-      let start = (options.range && options.range.start) || 0;
+      let start = options.range?.start || 0;
       let end = start + dlChunkSize;
-      const rangeEnd = options.range && options.range.end;
+      const rangeEnd = options.range?.end;
 
       contentLength = options.range ?
         (rangeEnd ? rangeEnd + 1 : parseInt(format.contentLength)) - start :

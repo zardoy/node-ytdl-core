@@ -54,7 +54,7 @@ export const getBasicInfo = async(id: string, options: object): Promise<object> 
     if (playErr || privateErr) {
       throw playErr || privateErr;
     }
-    return info && info.player_response && (
+    return info?.player_response && (
       info.player_response.streamingData || isRental(info.player_response) || isNotYetBroadcasted(info.player_response)
     );
   };
@@ -76,7 +76,7 @@ export const getBasicInfo = async(id: string, options: object): Promise<object> 
     media,
     likes: extras.getLikes(info),
     dislikes: extras.getDislikes(info),
-    age_restricted: !!(media && media.notice_url && AGE_RESTRICTED_URLS.some(url => media.notice_url.includes(url))),
+    age_restricted: !!(media?.notice_url && AGE_RESTRICTED_URLS.some(url => media.notice_url.includes(url))),
 
     // Give the standard link to the video.
     video_url: BASE_URL + id,
@@ -84,18 +84,17 @@ export const getBasicInfo = async(id: string, options: object): Promise<object> 
   };
 
   info.videoDetails = extras.cleanVideoDetails(Object.assign({},
-    info.player_response && info.player_response.microformat &&
-    info.player_response.microformat.playerMicroformatRenderer,
-    info.player_response && info.player_response.videoDetails, additional), info);
+    info.player_response?.microformat?.playerMicroformatRenderer,
+    info.player_response?.videoDetails, additional), info);
 
   return info;
 };
 
 const privateVideoError = player_response => {
-  let playability = player_response && player_response.playabilityStatus;
+  let playability = player_response?.playabilityStatus;
   if (playability && playability.status === 'LOGIN_REQUIRED' && playability.messages &&
     playability.messages.filter(m => /This is a private video/.test(m)).length) {
-    return new UnrecoverableError(playability.reason || (playability.messages && playability.messages[0]));
+    return new UnrecoverableError(playability.reason || (playability.messages?.[0]));
   } else {
     return null;
   }
@@ -144,7 +143,7 @@ const getIdentityToken = (id, options, key, throwIfNotFound) =>
     if (!match && throwIfNotFound) {
       throw new UnrecoverableError('Cookie header used in request, but unable to find YouTube identity token');
     }
-    return match && match[2];
+    return match?.[2];
   });
 
 
@@ -159,9 +158,9 @@ const pipeline = async(args: object[], validate: Function, retryOptions: object,
       const newInfo = await retryFunc(func, args.concat([info]), retryOptions);
       if (newInfo.player_response) {
         newInfo.player_response.videoDetails = assign(
-          info && info.player_response && info.player_response.videoDetails,
+          info?.player_response?.videoDetails,
           newInfo.player_response.videoDetails);
-        newInfo.player_response = assign(info && info.player_response, newInfo.player_response);
+        newInfo.player_response = assign(info?.player_response, newInfo.player_response);
       }
       info = assign(info, newInfo);
       if (validate(info, false)) {
@@ -243,7 +242,7 @@ const findJSON = (source, varName, body, left, right, prependJSON) => {
 
 const findPlayerResponse = (source, info) => {
   const player_response = info && (
-    (info.args && info.args.player_response) ||
+    (info.args?.player_response) ||
     info.player_response || info.playerResponse || info.embedded_player_response);
   return parseJSON(source, 'player_response', player_response);
 };
@@ -279,7 +278,7 @@ const getWatchJSONPage = async(id, options) => {
   }
   let info = parsedBody.reduce((part, curr) => Object.assign(curr, part), {});
   info.player_response = findPlayerResponse('watch.json', info);
-  info.html5player = info.player && info.player.assets && info.player.assets.js;
+  info.html5player = info.player?.assets?.js;
 
   return info;
 };
@@ -319,7 +318,7 @@ const getVideoInfoPage = async(id, options) => {
 
 const parseFormats = (player_response: object): object[] => {
   let formats = [];
-  if (player_response && player_response.streamingData) {
+  if (player_response?.streamingData) {
     formats = formats
       .concat(player_response.streamingData.formats || [])
       .concat(player_response.streamingData.adaptiveFormats || []);
@@ -334,7 +333,7 @@ const parseFormats = (player_response: object): object[] => {
 export const getInfo = async(id: string, options: object): Promise<object> => {
   let info = await getBasicInfo(id, options);
   const hasManifest =
-    info.player_response && info.player_response.streamingData && (
+    info.player_response?.streamingData && (
       info.player_response.streamingData.dashManifestUrl ||
       info.player_response.streamingData.hlsManifestUrl
     );
