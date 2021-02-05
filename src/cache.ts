@@ -39,11 +39,13 @@ export default class Cache extends Map {
       return value;
     }
   }
-  delete(key: unknown): void {
+  delete(key: unknown): boolean {
     let entry = super.get(key);
     if (entry) {
       clearTimeout(entry.tid);
-      super.delete(key);
+      return super.delete(key);
+    } else {
+      return false;
     }
   }
   clear(): void {
