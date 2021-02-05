@@ -8,7 +8,18 @@ import { cache as sigCache } from './sig';
 import { getURLVideoID, getVideoID, validateID, validateURL } from './url-utils';
 import * as utils from './utils';
 
-const ytdl = (link: string, options: object | null): ReadableStream => {
+interface DownloadOptions extends GetInfoOptions, ChooseFormatOptions {
+  range?: Record<'start' | 'end', number>;
+  /**
+   * `number` treated as number of milliseconds
+   */
+  begin?: string | number | Date;
+  liveBuffer?: number;
+  highWaterMark?: number;
+  dlChunkSize?: number;
+}
+
+const ytdl = (link: string, options: DownloadOptions): Readable => {
   const stream = createStream(options);
   ytdl.getInfo(link, options).then(info => {
     downloadFromInfoCallback(stream, info, options);
@@ -57,7 +68,7 @@ const pipeAndSetEvents = (req, stream, end) => {
 /**
  * Chooses a format to download.
  */
-const downloadFromInfoCallback = (stream: Readable, info: object, options: object) => {
+const downloadFromInfoCallback = (stream: Readable, info: VideoInfo, options: DownloadOptions): void => {
   options = options || {};
 
   let err = utils.playError(info.player_response, ['UNPLAYABLE', 'LIVE_STREAM_OFFLINE', 'LOGIN_REQUIRED']);
@@ -180,7 +191,7 @@ const downloadFromInfoCallback = (stream: Readable, info: object, options: objec
  * `ytdl.getInfo()`. In case the user might want to look at the
  * `info` object before deciding to download.
  */
-ytdl.downloadFromInfo = (info: object, options: object): ReadableStream => {
+export const downloadFromInfo = (info: VideoInfo, options?: DownloadOptions): Readable => {
   const stream = createStream(options);
   if (!info.full) {
     throw Error('Cannot use `ytdl.downloadFromInfo()` when called ' +

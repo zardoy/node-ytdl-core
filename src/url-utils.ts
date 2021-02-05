@@ -24,7 +24,7 @@ const validPathDomains = /^https?:\/\/(youtu\.be\/|(www\.)?youtube.com\/(embed|v
  * @throws {Error} If unable to find an ID
  * @throws {TypeError} If videoid doesn't match specs
  */
-export const getURLVideoID = (link: string): string => {
+export const getURLVideoID = (link: string): string | never => {
   const parsed = new URL(link);
   let id = parsed.searchParams.get('v');
   if (validPathDomains.test(link) && !id) {
@@ -53,7 +53,7 @@ const urlRegex = /^https?:\/\//;
  * @throws {Error} If unable to find an ID
  * @throws {TypeError} If videoid doesn't match specs
  */
-export const getVideoID = (str: string): string => {
+export const getVideoID = (str: string): string | never => {
   if (validateID(str)) {
     return str;
   } else if (urlRegex.test(str)) {
