@@ -71,7 +71,7 @@ const pipeAndSetEvents = (req, stream, end) => {
 const downloadFromInfoCallback = (stream: Readable, info: VideoInfo, options: DownloadOptions): void => {
   options = options || {};
 
-  let err = utils.playError(info.player_response, ['UNPLAYABLE', 'LIVE_STREAM_OFFLINE', 'LOGIN_REQUIRED']);
+  const err = utils.playError(info.player_response, ['UNPLAYABLE', 'LIVE_STREAM_OFFLINE', 'LOGIN_REQUIRED']);
   if (err) {
     stream.emit('error', err);
     return;
@@ -125,7 +125,7 @@ const downloadFromInfoCallback = (stream: Readable, info: VideoInfo, options: Do
       backoff: { inc: 500, max: 10000 },
     });
 
-    let shouldBeChunked = dlChunkSize !== 0 && (!format.hasAudio || !format.hasVideo);
+    const shouldBeChunked = dlChunkSize !== 0 && (!format.hasAudio || !format.hasVideo);
 
     if (shouldBeChunked) {
       let start = options.range?.start || 0;

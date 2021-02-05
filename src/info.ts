@@ -377,8 +377,8 @@ export const getBasicInfo = async(id: string, options?: GetInfoOptions): Promise
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Safari/537.36',
     }, options.requestOptions.headers);
   const validate = info => {
-    let playErr = utils.playError(info.player_response, ['ERROR'], UnrecoverableError);
-    let privateErr = privateVideoError(info.player_response);
+    const playErr = utils.playError(info.player_response, ['ERROR'], UnrecoverableError);
+    const privateErr = privateVideoError(info.player_response);
     if (playErr || privateErr) {
       throw playErr || privateErr;
     }
@@ -386,7 +386,7 @@ export const getBasicInfo = async(id: string, options?: GetInfoOptions): Promise
       info.player_response.streamingData || isRental(info.player_response) || isNotYetBroadcasted(info.player_response)
     );
   };
-  let info = await pipeline([id, options], validate, retryOptions, [
+  const info = await pipeline([id, options], validate, retryOptions, [
     getWatchHTMLPage,
     getWatchJSONPage,
     getVideoInfoPage,
@@ -399,7 +399,7 @@ export const getBasicInfo = async(id: string, options?: GetInfoOptions): Promise
 
   // Add additional properties to info.
   const media = extras.getMedia(info);
-  let additional = {
+  const additional = {
     author: extras.getAuthor(info),
     media,
     likes: extras.getLikes(info),
@@ -419,10 +419,10 @@ export const getBasicInfo = async(id: string, options?: GetInfoOptions): Promise
 };
 
 const privateVideoError = player_response => {
-  let playability = player_response?.playabilityStatus;
+  const playability = player_response?.playabilityStatus;
   if (playability && playability.status === 'LOGIN_REQUIRED' && playability.messages &&
     playability.messages.filter(m => /This is a private video/.test(m)).length) {
-    return new UnrecoverableError(playability.reason || (playability.messages?.[0]));
+    return new UnrecoverableError(playability.reason || playability.messages?.[0]);
   } else {
     return null;
   }
@@ -430,14 +430,14 @@ const privateVideoError = player_response => {
 
 
 const isRental = player_response => {
-  let playability = player_response.playabilityStatus;
+  const playability = player_response.playabilityStatus;
   return playability && playability.status === 'UNPLAYABLE' &&
     playability.errorScreen && playability.errorScreen.playerLegacyDesktopYpcOfferRenderer;
 };
 
 
 const isNotYetBroadcasted = player_response => {
-  let playability = player_response.playabilityStatus;
+  const playability = player_response.playabilityStatus;
   return playability && playability.status === 'LIVE_STREAM_OFFLINE';
 };
 
@@ -457,7 +457,7 @@ const getEmbedPageBody = (id, options) => {
 
 
 const getHTML5player = body => {
-  let html5playerRes =
+  const html5playerRes =
     /<script\s+src="([^"]+)"(?:\s+type="text\/javascript")?\s+name="player_ias\/base"\s*>|"jsUrl":"([^"]+)"/
       .exec(body);
   return html5playerRes ? html5playerRes[1] || html5playerRes[2] : null;
@@ -466,8 +466,8 @@ const getHTML5player = body => {
 
 const getIdentityToken = (id, options, key, throwIfNotFound) =>
   cookieCache.getOrSet(key, async() => {
-    let page = await getWatchHTMLPageBody(id, options);
-    let match = page.match(/(["'])ID_TOKEN\1[:,]\s?"([^"]+)"/);
+    const page = await getWatchHTMLPageBody(id, options);
+    const match = page.match(/(["'])ID_TOKEN\1[:,]\s?"([^"]+)"/);
     if (!match && throwIfNotFound) {
       throw new UnrecoverableError('Cookie header used in request, but unable to find YouTube identity token');
     }
@@ -481,7 +481,7 @@ const getIdentityToken = (id, options, key, throwIfNotFound) =>
  */
 const pipeline = async(args: object[], validate: Function, retryOptions: object, endpoints: Function[]): [object, object, object] => {
   let info;
-  for (let func of endpoints) {
+  for (const func of endpoints) {
     try {
       const newInfo = await retryFunc(func, args.concat([info]), retryOptions);
       if (newInfo.player_response) {
@@ -510,7 +510,7 @@ const pipeline = async(args: object[], validate: Function, retryOptions: object,
  */
 const assign = (target: object, source: object): object => {
   if (!target || !source) { return target || source; }
-  for (let [key, value] of Object.entries(source)) {
+  for (const [key, value] of Object.entries(source)) {
     if (value !== null && value !== undefined) {
       target[key] = value;
     }
@@ -536,7 +536,7 @@ const retryFunc = async(func: Function, args: object[], options: { maxRetries: n
         (err instanceof miniget.MinigetError && err.statusCode < 500) || currentTry >= options.maxRetries) {
         throw err;
       }
-      let wait = Math.min(++currentTry * options.backoff.inc, options.backoff.max);
+      const wait = Math.min(++currentTry * options.backoff.inc, options.backoff.max);
       await new Promise(resolve => setTimeout(resolve, wait));
     }
   }
@@ -560,7 +560,7 @@ const parseJSON = (source, varName, json) => {
 
 
 const findJSON = (source, varName, body, left, right, prependJSON) => {
-  let jsonStr = utils.between(body, left, right);
+  const jsonStr = utils.between(body, left, right);
   if (!jsonStr) {
     throw Error(`Could not find ${varName} in ${source}`);
   }
@@ -570,7 +570,7 @@ const findJSON = (source, varName, body, left, right, prependJSON) => {
 
 const findPlayerResponse = (source, info) => {
   const player_response = info && (
-    (info.args?.player_response) ||
+    info.args?.player_response ||
     info.player_response || info.playerResponse || info.embedded_player_response);
   return parseJSON(source, 'player_response', player_response);
 };
@@ -579,7 +579,7 @@ const findPlayerResponse = (source, info) => {
 const getWatchJSONURL = (id, options) => `${getWatchHTMLURL(id, options)}&pbj=1`;
 const getWatchJSONPage = async(id, options) => {
   const reqOptions = Object.assign({ headers: {} }, options.requestOptions);
-  let cookie = reqOptions.headers.Cookie || reqOptions.headers.cookie;
+  const cookie = reqOptions.headers.Cookie || reqOptions.headers.cookie;
   reqOptions.headers = Object.assign({
     'x-youtube-client-name': '1',
     'x-youtube-client-version': '2.20201203.06.00',
@@ -596,15 +596,15 @@ const getWatchJSONPage = async(id, options) => {
   }
 
   const jsonUrl = getWatchJSONURL(id, options);
-  let body = await miniget(jsonUrl, reqOptions).text();
-  let parsedBody = parseJSON('watch.json', 'body', body);
+  const body = await miniget(jsonUrl, reqOptions).text();
+  const parsedBody = parseJSON('watch.json', 'body', body);
   if (parsedBody.reload === 'now') {
     await setIdentityToken('browser', false);
   }
   if (parsedBody.reload === 'now' || !Array.isArray(parsedBody)) {
     throw Error('Unable to retrieve video metadata in watch.json');
   }
-  let info = parsedBody.reduce((part, curr) => Object.assign(curr, part), {});
+  const info = parsedBody.reduce((part, curr) => Object.assign(curr, part), {});
   info.player_response = findPlayerResponse('watch.json', info);
   info.html5player = info.player?.assets?.js;
 
@@ -613,13 +613,13 @@ const getWatchJSONPage = async(id, options) => {
 
 
 const getWatchHTMLPage = async(id, options) => {
-  let body = await getWatchHTMLPageBody(id, options);
-  let info = { page: 'watch' };
+  const body = await getWatchHTMLPageBody(id, options);
+  const info = { page: 'watch' };
   try {
     info.player_response = findJSON('watch.html', 'player_response',
       body, /\bytInitialPlayerResponse\s*=\s*\{/i, '\n', '{');
   } catch (err) {
-    let args = findJSON('watch.html', 'player_response', body, /\bytplayer\.config\s*=\s*{/, '</script>', '{');
+    const args = findJSON('watch.html', 'player_response', body, /\bytplayer\.config\s*=\s*{/, '</script>', '{');
     info.player_response = findPlayerResponse('watch.html', args);
   }
   info.response = findJSON('watch.html', 'response', body, /\bytInitialData("\])?\s*=\s*\{/i, '\n', '{');
@@ -638,8 +638,8 @@ const getVideoInfoPage = async(id, options) => {
   url.searchParams.set('ps', 'default');
   url.searchParams.set('gl', 'US');
   url.searchParams.set('hl', options.lang || 'en');
-  let body = await miniget(url.toString(), options.requestOptions).text();
-  let info = querystring.parse(body);
+  const body = await miniget(url.toString(), options.requestOptions).text();
+  const info = querystring.parse(body);
   info.player_response = findPlayerResponse('get_video_info', info);
   return info;
 };
@@ -659,12 +659,13 @@ const parseFormats = (player_response: object): object[] => {
  * Gets info from a video additional formats and deciphered URLs.
  */
 export const getInfo = async(id: string, options?: GetInfoOptions): Promise<VideoInfo> => {
+  const info = await getBasicInfo(id, options);
   const hasManifest =
     info.player_response?.streamingData && (
       info.player_response.streamingData.dashManifestUrl ||
       info.player_response.streamingData.hlsManifestUrl
     );
-  let funcs = [];
+  const funcs = [];
   if (info.formats.length) {
     info.html5player = info.html5player ||
       getHTML5player(await getWatchHTMLPageBody(id, options)) || getHTML5player(await getEmbedPageBody(id, options));
@@ -675,15 +676,15 @@ export const getInfo = async(id: string, options?: GetInfoOptions): Promise<Vide
     funcs.push(sig.decipherFormats(info.formats, html5player, options));
   }
   if (hasManifest && info.player_response.streamingData.dashManifestUrl) {
-    let url = info.player_response.streamingData.dashManifestUrl;
+    const url = info.player_response.streamingData.dashManifestUrl;
     funcs.push(getDashManifest(url, options));
   }
   if (hasManifest && info.player_response.streamingData.hlsManifestUrl) {
-    let url = info.player_response.streamingData.hlsManifestUrl;
+    const url = info.player_response.streamingData.hlsManifestUrl;
     funcs.push(getM3U8(url, options));
   }
 
-  let results = await Promise.all(funcs);
+  const results = await Promise.all(funcs);
   info.formats = Object.values(Object.assign({}, ...results));
   info.formats = info.formats.map(formatUtils.addFormatMeta);
   info.formats.sort(formatUtils.sortFormats);
@@ -696,7 +697,7 @@ export const getInfo = async(id: string, options?: GetInfoOptions): Promise<Vide
  * Gets additional DASH formats.
  */
 const getDashManifest = (url: string, options: object): Promise<object[]> => new Promise((resolve, reject) => {
-  let formats = {};
+  const formats = {};
   const parser = sax.parser(false);
   parser.onerror = reject;
   let adaptationSet;
@@ -715,8 +716,8 @@ const getDashManifest = (url: string, options: object): Promise<object[]> => new
           height: parseInt(node.attributes.HEIGHT),
           fps: parseInt(node.attributes.FRAMERATE),
         } : {
-            audioSampleRate: node.attributes.AUDIOSAMPLINGRATE,
-          });
+          audioSampleRate: node.attributes.AUDIOSAMPLINGRATE,
+        });
       }
     }
   };
@@ -734,8 +735,8 @@ const getDashManifest = (url: string, options: object): Promise<object[]> => new
  */
 const getM3U8 = async(url: string, options: object): Promise<object[]> => {
   url = new URL(url, BASE_URL);
-  let body = await miniget(url.toString(), options.requestOptions).text();
-  let formats = {};
+  const body = await miniget(url.toString(), options.requestOptions).text();
+  const formats = {};
   body
     .split('\n')
     .filter(line => /^https?:\/\//.test(line))
@@ -749,7 +750,7 @@ const getM3U8 = async(url: string, options: object): Promise<object[]> => {
 
 // Cache get info functions.
 // In case a user wants to get a video's info before downloading.
-for (let funcName of ['getBasicInfo', 'getInfo']) {
+for (const funcName of ['getBasicInfo', 'getInfo']) {
   /**
    * @param {string} link
    * @param {Object} options
@@ -758,7 +759,7 @@ for (let funcName of ['getBasicInfo', 'getInfo']) {
   const func = exports[funcName];
   exports[funcName] = async(link, options = {}) => {
     utils.checkForUpdates();
-    let id = await urlUtils.getVideoID(link);
+    const id = await urlUtils.getVideoID(link);
     const key = [funcName, id, options.lang].join('-');
     return cache.getOrSet(key, () => func(id, options));
   };

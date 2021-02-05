@@ -94,7 +94,7 @@ const getAudioEncodingRank = format =>
  */
 const sortFormatsBy = (a: object, b: object, sortBy: NonNullable<Parameters<typeof Array.prototype.sort>[0]>): number => {
   let res = 0;
-  for (let fn of sortBy) {
+  for (const fn of sortBy) {
     res = fn(b) - fn(a);
     if (res !== 0) {
       break;
@@ -205,7 +205,7 @@ export const chooseFormat = (
  *
  */
 const getFormatByQuality = (quality: string | string[], formats: object): object => {
-  let getFormat = itag => formats.find(format => `${format.itag}` === `${itag}`);
+  const getFormat = itag => formats.find(format => `${format.itag}` === `${itag}`);
   if (Array.isArray(quality)) {
     return getFormat(quality.find(q => getFormat(q)));
   } else {
