@@ -12,7 +12,7 @@ export const cache = new Cache();
  * Extract signature deciphering tokens from html5player file.
  */
 export const getTokens = (html5playerfile: string, options: object): Promise<string[]> => cache.getOrSet(html5playerfile, async() => {
-  let body = await miniget(html5playerfile, options.requestOptions).text();
+  const body = await miniget(html5playerfile, options.requestOptions).text();
   const tokens = extractActions(body);
   if (!tokens || !tokens.length) {
     throw Error('Could not extract signature deciphering actions');
@@ -151,7 +151,7 @@ export const extractActions = (body: string): string[] | null => {
   const tokenizeRegexp = new RegExp(myreg, 'g');
   const tokens = [];
   while ((result = tokenizeRegexp.exec(funcBody)) !== null) {
-    let key = result[1] || result[2] || result[3];
+    const key = result[1] || result[2] || result[3];
     switch (key) {
       case swapKey:
         tokens.push(`w${result[4]}`);
@@ -206,10 +206,10 @@ export const setDownloadURL = (format: object, sig: string) => {
  * Applies `sig.decipher()` to all format URL's.
  */
 export const decipherFormats = async(formats: object[], html5player: string, options: object) => {
-  let decipheredFormats = {};
-  let tokens = await getTokens(html5player, options);
+  const decipheredFormats = {};
+  const tokens = await getTokens(html5player, options);
   formats.forEach(format => {
-    let cipher = format.signatureCipher || format.cipher;
+    const cipher = format.signatureCipher || format.cipher;
     if (cipher) {
       Object.assign(format, querystring.parse(cipher));
       delete format.signatureCipher;

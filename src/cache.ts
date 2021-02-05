@@ -17,7 +17,7 @@ export default class Cache extends Map {
     });
   }
   get(key: unknown): any {
-    let entry = super.get(key);
+    const entry = super.get(key);
     if (entry) {
       return entry.value;
     }
@@ -27,7 +27,7 @@ export default class Cache extends Map {
     if (this.has(key)) {
       return this.get(key);
     } else {
-      let value = fn();
+      const value = fn();
       this.set(key, value);
       (async() => {
         try {
@@ -40,7 +40,7 @@ export default class Cache extends Map {
     }
   }
   delete(key: unknown): boolean {
-    let entry = super.get(key);
+    const entry = super.get(key);
     if (entry) {
       clearTimeout(entry.tid);
       return super.delete(key);
@@ -49,7 +49,7 @@ export default class Cache extends Map {
     }
   }
   clear(): void {
-    for (let entry of this.values()) {
+    for (const entry of this.values()) {
       clearTimeout(entry.tid);
     }
     super.clear();

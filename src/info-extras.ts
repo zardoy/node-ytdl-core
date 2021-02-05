@@ -16,7 +16,7 @@ const getText = obj => obj ? obj.runs ? obj.runs[0].text : obj.simpleText : null
  * Get video media.
  */
 export const getMedia = (info: object): object => {
-  let media = {};
+  const media = {};
   let results = [];
   try {
     results = info.response.contents.twoColumnWatchNextResults.results.results.contents;
@@ -24,19 +24,19 @@ export const getMedia = (info: object): object => {
     // Do nothing
   }
 
-  let result = results.find(v => v.videoSecondaryInfoRenderer);
+  const result = results.find(v => v.videoSecondaryInfoRenderer);
   if (!result) { return {}; }
 
   try {
-    let metadataRows =
+    const metadataRows =
       (result.metadataRowContainer || result.videoSecondaryInfoRenderer.metadataRowContainer)
         .metadataRowContainerRenderer.rows;
-    for (let row of metadataRows) {
+    for (const row of metadataRows) {
       if (row.metadataRowRenderer) {
-        let title = getText(row.metadataRowRenderer.title).toLowerCase();
-        let contents = row.metadataRowRenderer.contents[0];
+        const title = getText(row.metadataRowRenderer.title).toLowerCase();
+        const contents = row.metadataRowRenderer.contents[0];
         media[title] = getText(contents);
-        let runs = contents.runs;
+        const runs = contents.runs;
         if (runs?.[0].navigationEndpoint) {
           media[`${title}_url`] = new URL(
             runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url, BASE_URL).toString();
@@ -46,22 +46,22 @@ export const getMedia = (info: object): object => {
           media.category_url = TITLE_TO_CATEGORY[title].url;
         }
       } else if (row.richMetadataRowRenderer) {
-        let contents = row.richMetadataRowRenderer.contents;
-        let boxArt = contents
+        const contents = row.richMetadataRowRenderer.contents;
+        const boxArt = contents
           .filter(meta => meta.richMetadataRenderer.style === 'RICH_METADATA_RENDERER_STYLE_BOX_ART');
-        for (let { richMetadataRenderer } of boxArt) {
-          let meta = richMetadataRenderer;
+        for (const { richMetadataRenderer } of boxArt) {
+          const meta = richMetadataRenderer;
           media.year = getText(meta.subtitle);
-          let type = getText(meta.callToAction).split(' ')[1];
+          const type = getText(meta.callToAction).split(' ')[1];
           media[type] = getText(meta.title);
           media[`${type}_url`] = new URL(
             meta.endpoint.commandMetadata.webCommandMetadata.url, BASE_URL).toString();
           media.thumbnails = meta.thumbnail.thumbnails;
         }
-        let topic = contents
+        const topic = contents
           .filter(meta => meta.richMetadataRenderer.style === 'RICH_METADATA_RENDERER_STYLE_TOPIC');
-        for (let { richMetadataRenderer } of topic) {
-          let meta = richMetadataRenderer;
+        for (const { richMetadataRenderer } of topic) {
+          const meta = richMetadataRenderer;
           media.category = getText(meta.title);
           media.category_url = new URL(
             meta.endpoint.commandMetadata.webCommandMetadata.url, BASE_URL).toString();
@@ -85,10 +85,10 @@ const isVerified = badges => !!(badges && badges.find(b => b.metadataBadgeRender
 export const getAuthor = (info: object): object => {
   let channelId, thumbnails = [], subscriberCount, verified = false;
   try {
-    let results = info.response.contents.twoColumnWatchNextResults.results.results.contents;
-    let v = results.find(v2 =>
+    const results = info.response.contents.twoColumnWatchNextResults.results.results.contents;
+    const v = results.find(v2 =>
       v2.videoSecondaryInfoRenderer?.owner?.videoOwnerRenderer);
-    let videoOwnerRenderer = v.videoSecondaryInfoRenderer.owner.videoOwnerRenderer;
+    const videoOwnerRenderer = v.videoSecondaryInfoRenderer.owner.videoOwnerRenderer;
     channelId = videoOwnerRenderer.navigationEndpoint.browseEndpoint.browseId;
     thumbnails = videoOwnerRenderer.thumbnail.thumbnails.map(thumbnail => {
       thumbnail.url = new URL(thumbnail.url, BASE_URL).toString();
@@ -100,9 +100,9 @@ export const getAuthor = (info: object): object => {
     // Do nothing.
   }
   try {
-    let videoDetails = info.player_response.microformat?.playerMicroformatRenderer;
-    let id = videoDetails?.channelId || channelId || info.player_response.videoDetails.channelId;
-    let author = {
+    const videoDetails = info.player_response.microformat?.playerMicroformatRenderer;
+    const id = videoDetails?.channelId || channelId || info.player_response.videoDetails.channelId;
+    const author = {
       id: id,
       name: videoDetails ? videoDetails.ownerChannelName : info.player_response.videoDetails.author,
       user: videoDetails ? videoDetails.ownerProfileUrl.split('/').slice(-1)[0] : null,
@@ -127,16 +127,16 @@ const parseRelatedVideo = (details, rvsParams) => {
   try {
     let viewCount = getText(details.viewCountText);
     let shortViewCount = getText(details.shortViewCountText);
-    let rvsDetails = rvsParams.find(elem => elem.id === details.videoId);
+    const rvsDetails = rvsParams.find(elem => elem.id === details.videoId);
     if (!/^\d/.test(shortViewCount)) {
-      shortViewCount = (rvsDetails?.short_view_count_text) || '';
+      shortViewCount = rvsDetails?.short_view_count_text || '';
     }
     viewCount = (/^\d/.test(viewCount) ? viewCount : shortViewCount).split(' ')[0];
-    let browseEndpoint = details.shortBylineText.runs[0].navigationEndpoint.browseEndpoint;
-    let channelId = browseEndpoint.browseId;
-    let name = getText(details.shortBylineText);
-    let user = (browseEndpoint.canonicalBaseUrl || '').split('/').slice(-1)[0];
-    let video = {
+    const browseEndpoint = details.shortBylineText.runs[0].navigationEndpoint.browseEndpoint;
+    const channelId = browseEndpoint.browseId;
+    const name = getText(details.shortBylineText);
+    const user = (browseEndpoint.canonicalBaseUrl || '').split('/').slice(-1)[0];
+    const video = {
       id: details.videoId,
       title: getText(details.title),
       published: getText(details.publishedTimeText),
@@ -197,17 +197,17 @@ export const getRelatedVideos = (info: object): object[] => {
   } catch (err) {
     return [];
   }
-  let videos = [];
-  for (let result of secondaryResults || []) {
-    let details = result.compactVideoRenderer;
+  const videos = [];
+  for (const result of secondaryResults || []) {
+    const details = result.compactVideoRenderer;
     if (details) {
-      let video = parseRelatedVideo(details, rvsParams);
+      const video = parseRelatedVideo(details, rvsParams);
       if (video) videos.push(video);
     } else {
-      let autoplay = result.compactAutoplayRenderer || result.itemSectionRenderer;
+      const autoplay = result.compactAutoplayRenderer || result.itemSectionRenderer;
       if (!autoplay || !Array.isArray(autoplay.contents)) continue;
-      for (let content of autoplay.contents) {
-        let video = parseRelatedVideo(content.compactVideoRenderer, rvsParams);
+      for (const content of autoplay.contents) {
+        const video = parseRelatedVideo(content.compactVideoRenderer, rvsParams);
         if (video) videos.push(video);
       }
     }
@@ -220,10 +220,10 @@ export const getRelatedVideos = (info: object): object[] => {
  */
 export const getLikes = (info: object): number => {
   try {
-    let contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
-    let video = contents.find(r => r.videoPrimaryInfoRenderer);
-    let buttons = video.videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons;
-    let like = buttons.find(b => b.toggleButtonRenderer &&
+    const contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
+    const video = contents.find(r => r.videoPrimaryInfoRenderer);
+    const buttons = video.videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons;
+    const like = buttons.find(b => b.toggleButtonRenderer &&
       b.toggleButtonRenderer.defaultIcon.iconType === 'LIKE');
     return parseInt(like.toggleButtonRenderer.defaultText.accessibility.accessibilityData.label.replace(/\D+/g, ''));
   } catch (err) {
@@ -236,10 +236,10 @@ export const getLikes = (info: object): number => {
  */
 export const getDislikes = (info: object): number => {
   try {
-    let contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
-    let video = contents.find(r => r.videoPrimaryInfoRenderer);
-    let buttons = video.videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons;
-    let dislike = buttons.find(b => b.toggleButtonRenderer &&
+    const contents = info.response.contents.twoColumnWatchNextResults.results.results.contents;
+    const video = contents.find(r => r.videoPrimaryInfoRenderer);
+    const buttons = video.videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons;
+    const dislike = buttons.find(b => b.toggleButtonRenderer &&
       b.toggleButtonRenderer.defaultIcon.iconType === 'DISLIKE');
     return parseInt(dislike.toggleButtonRenderer.defaultText.accessibility.accessibilityData.label.replace(/\D+/g, ''));
   } catch (err) {
