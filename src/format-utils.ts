@@ -10,7 +10,7 @@ export type Filter =
   | 'audioonly'
   | ((format: VideoFormat) => boolean);
 
-interface ChooseFormatOptions {
+export interface ChooseFormatOptions {
   // To remove string
   quality?: 'lowest' | 'highest' | 'highestaudio' | 'lowestaudio' | 'highestvideo' | 'lowestvideo' | string | number | string[] | number[];
   filter?: Filter;

@@ -1,11 +1,17 @@
 import m3u8stream, { parseTimestamp } from 'm3u8stream';
 import miniget from 'miniget';
 import { PassThrough, Readable } from 'stream';
+import { ChooseFormatOptions } from './format-utils';
 
-import { chooseFormat, filterFormats } from './format-utils';
-import { cache as infoCache, cookieCache, getBasicInfo, getInfo, watchPageCache } from './info';
+import {
+  cache as infoCache,
+  cookieCache,
+  getInfo,
+  GetInfoOptions,
+  VideoInfo,
+  watchPageCache,
+} from './info';
 import { cache as sigCache } from './sig';
-import { getURLVideoID, getVideoID, validateID, validateURL } from './url-utils';
 import * as utils from './utils';
 
 interface DownloadOptions extends GetInfoOptions, ChooseFormatOptions {
@@ -21,23 +27,32 @@ interface DownloadOptions extends GetInfoOptions, ChooseFormatOptions {
 
 const ytdl = (link: string, options: DownloadOptions): Readable => {
   const stream = createStream(options);
-  ytdl.getInfo(link, options).then(info => {
+  getInfo(link, options).then(info => {
     downloadFromInfoCallback(stream, info, options);
   }, stream.emit.bind(stream, 'error'));
   return stream;
 };
 
-// Add exports from other files
-ytdl.getBasicInfo = getBasicInfo;
-ytdl.getInfo = getInfo;
-ytdl.chooseFormat = chooseFormat;
-ytdl.filterFormats = filterFormats;
-ytdl.validateID = validateID;
-ytdl.validateURL = validateURL;
-ytdl.getURLVideoID = getURLVideoID;
-ytdl.getVideoID = getVideoID;
+// Re-exports
+export {
+  GetInfoOptions,
+  VideoDetails,
+  VideoInfo,
+  getBasicInfo,
+  getInfo,
+} from './info';
+export {
+  chooseFormat,
+  filterFormats,
+} from './format-utils';
+export {
+  validateID,
+  validateURL,
+  getURLVideoID,
+  getVideoID,
+} from './url-utils';
 
-ytdl.cache = {
+export const cache = {
   sig: sigCache,
   info: infoCache,
   watch: watchPageCache,
@@ -203,4 +218,6 @@ export const downloadFromInfo = (info: VideoInfo, options?: DownloadOptions): Re
   return stream;
 };
 
-export = ytdl;
+export default ytdl;
+
+module.exports = ytdl;
